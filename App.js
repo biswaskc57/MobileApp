@@ -1,68 +1,50 @@
 import React, { useState } from "react";
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  View,
-  Button,
-  TextInput,
-  FlatList,
-  Image,
-} from "react-native";
+import { StyleSheet, View, Button, TextInput, Text } from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import { useEffect } from "react";
 
 export default function App() {
-  const [item, setItem] = useState("");
-  const [recipe, setRecipe] = useState([]);
+  const [result, setResult] = useState("");
+  const [amount, setAmount] = useState(0);
+  const [currency, SetCurrency] = useState(0);
+  const [data, SetData] = useState([]);
 
-  const getRecipe = () => {
-    const url = "http://www.recipepuppy.com/api/?i=" + item;
+  useEffect(() => {
+    const url = "https://api.exchangeratesapi.io/latest";
     fetch(url)
       .then((response) => response.json())
       .then((responseJson) => {
-        setRecipe(responseJson.results);
+        SetData(responseJson.rates);
       })
       .catch((error) => {
         Alert.alert("Error", error);
       });
-  };
+  }, []);
 
-  const listSeparator = () => {
-    return (
-      <View
-        style={{
-          height: 1,
-          width: "80%",
-          backgroundColor: "#CED0CE",
-          marginLeft: "10%",
-        }}
-      />
-    );
+  const rateConversion = () => {
+    const rate = data[currency];
+    setResult((amount / rate).toFixed(5));
   };
-
   return (
-    <View style={styles.container}>
-      <FlatList
-        style={{ marginLeft: "5%", marginTop: "10%" }}
-        keyExtractor={(item, index) => index.toString}
-        renderItem={({ item }) => (
-          <View>
-            <Text style={{ fontSize: 18 }}>{item.title}</Text>
-            <Image
-              style={{ width: 66, height: 58 }}
-              source={{ uri: item.thumbnail }}
-            />
-          </View>
-        )}
-        ItemSeparatorComponent={listSeparator}
-        data={recipe}
+    <View>
+      <Text style={{ fontsize: 24 }}>{result}</Text>
+      <TextInput
+        style={{ fontSize: 18, width: 200, marginTop: 20 }}
+        placeholder="item"
+        type="numeric"
+        onChangeText={(amount) => setAmount(amount)}
       />
 
-      <TextInput
-        style={{ fontSize: 18, width: 200 }}
-        placeholder="item"
-        onChangeText={(item) => setItem(item)}
-      />
-      <Button style={{ width: 200 }} title="Find" onPress={getRecipe} />
+      <Picker
+        selectedValue={currency}
+        onValueChange={(value) => SetCurrency(value)} //Value from the array i.e. currency rate
+      >
+        {Object.keys(data).map((item, index) => (
+          <Picker.Item key={index} label={item} value={item} /> //keys from the array i.e. currency name
+        ))}
+      </Picker>
+
+      <Button style={{ width: 200 }} title="Find" onPress={rateConversion} />
     </View>
   );
 }
